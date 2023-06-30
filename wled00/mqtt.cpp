@@ -4,7 +4,6 @@
  * MQTT communication protocol for home automation
  */
 
-#ifdef WLED_ENABLE_MQTT
 #define MQTT_KEEP_ALIVE_TIME 60    // contact the MQTT broker every 60 seconds
 
 void parseMQTTBriPayload(char* payload)
@@ -19,6 +18,24 @@ void parseMQTTBriPayload(char* payload)
   }
 }
 
+void publishInfoMqtt()
+{
+  if (!WLED_MQTT_CONNECTED) return;
+  DEBUG_PRINTLN(F("Publish info MQTT"));
+
+  DynamicJsonDocument root(1024);
+  JsonObject info = root.createNestedObject("info");
+  serializeInfo(info);
+
+  char json_string[1024];
+  serializeJson(root, json_string);
+
+  char subuf[38];
+
+  strlcpy(subuf, mqttDeviceTopic, 33);
+  strcat_P(subuf, PSTR("/res"));
+  mqtt->publish(subuf, 0, false, json_string);
+}
 
 void onMqttConnect(bool sessionPresent)
 {
@@ -108,10 +125,6 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   if (strcmp_P(topic, PSTR("/col")) == 0) {
     colorFromDecOrHexString(col, payloadStr);
     colorUpdated(CALL_MODE_DIRECT_CHANGE);
-  } else if (strcmp_P(topic, PSTR("/req")) == 0) {
-    if(strcmp_P(payload, PSTR("info")) == 0) {
-      publishInfoMqtt();
-    }
   } else if (strcmp_P(topic, PSTR("/api")) == 0) {
     if (!requestJSONBufferLock(15)) {
       delete[] payloadStr;
@@ -127,7 +140,11 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
       handleSet(nullptr, apireq);
     }
     releaseJSONBufferLock();
-  } else if (strlen(topic) != 0) {
+  } else if (strcmp_P(topic, PSTR("/req")) == 0) {
+    if(strcmp_P(payload, PSTR("info")) == 0) {
+      publishInfoMqtt();
+    }
+  }else if (strlen(topic) != 0) {
     // non standard topic, check with usermods
     usermods.onMqttMessage(topic, payloadStr);
   } else {
@@ -139,33 +156,12 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
 }
 
 
-void publishInfoMqtt()
-{
-  if (!WLED_MQTT_CONNECTED) return;
-  DEBUG_PRINTLN(F("Publish info MQTT"));
-
-  DynamicJsonDocument root(1024);
-  JsonObject info = root.createNestedObject("info");
-  serializeInfo(info);
-
-  char json_string[1024];
-  serializeJson(root, json_string);
-
-  char subuf[38];
-
-  strlcpy(subuf, mqttDeviceTopic, 33);
-  strcat_P(subuf, PSTR("/res"));
-  mqtt->publish(subuf, 0, false, json_string);
-}
-
-
 void publishMqtt()
 {
   doPublishMqtt = false;
   if (!WLED_MQTT_CONNECTED) return;
   DEBUG_PRINTLN(F("Publish MQTT"));
 
-  #ifndef USERMOD_SMARTNEST
   char s[10];
   char subuf[38];
 
@@ -191,7 +187,6 @@ void publishMqtt()
     mqtt->publish(subuf, 0, true, json_string);      // retain effectId message
   }
 
-  // Brightness
   sprintf_P(s, PSTR("%u"), bri);
   strlcpy(subuf, mqttDeviceTopic, 33);
   strcat_P(subuf, PSTR("/g"));
@@ -201,21 +196,19 @@ void publishMqtt()
   // sprintf_P(s, PSTR("#%06X"), (col[3] << 24) | (col[0] << 16) | (col[1] << 8) | (col[2]));
   // strlcpy(subuf, mqttDeviceTopic, 33);
   // strcat_P(subuf, PSTR("/c"));
-  // mqtt->publish(subuf, 0, true, s);         // retain message
+  // mqtt->publish(subuf, 0, retainMqttMsg, s);         // optionally retain message (#2263)
 
-  // Online/offline status
   strlcpy(subuf, mqttDeviceTopic, 33);
   strcat_P(subuf, PSTR("/status"));
   mqtt->publish(subuf, 0, true, "online");          // retain message for a LWT
 
   // TEMPORARY DISALBE XML STATUS MESSAGE
-  // char apires[1024];                        // allocating 1024 bytes from stack can be risky
+  // char apires[1024];                                // allocating 1024 bytes from stack can be risky
   // XML_response(nullptr, apires);
   // strlcpy(subuf, mqttDeviceTopic, 33);
   // strcat_P(subuf, PSTR("/v"));
-  // mqtt->publish(subuf, 0, false, apires);   // do not retain message
+  // mqtt->publish(subuf, 0, retainMqttMsg, apires);   // optionally retain message (#2263)
 }
-
 
 //HA autodiscovery was removed in favor of the native integration in HA v0.102.0
 
@@ -250,13 +243,10 @@ bool initMqtt()
     mqtt->setCredentials(mqttUser, mqttPass);
   }
 
-  #ifndef USERMOD_SMARTNEST
   strlcpy(mqttStatusTopic, mqttDeviceTopic, 33);
   strcat_P(mqttStatusTopic, PSTR("/status"));
   mqtt->setWill(mqttStatusTopic, 0, true, "offline"); // LWT message
-  #endif
   mqtt->setKeepAlive(MQTT_KEEP_ALIVE_TIME);
   mqtt->connect();
   return true;
 }
-#endif

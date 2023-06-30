@@ -521,13 +521,12 @@ void WLED::initAP(bool resetAP)
   if (apBehavior == AP_BEHAVIOR_BUTTON_ONLY && !resetAP)
     return;
 
-  if (!apSSID[0] || resetAP) {
-    escapedMac = WiFi.macAddress();
-    escapedMac.replace(":", "");
-    escapedMac.toLowerCase();
-    strcpy_P(apSSID, PSTR("HelloLights "));
-    sprintf(apSSID + 12, "%*s", 6, escapedMac.c_str() + 6);
-  }
+  // if (!apSSID[0] || resetAP) {
+  //   escapedMac = WiFi.macAddress();
+  //   escapedMac.replace(":", "");
+  //   strcpy_P(apSSID, PSTR("HelloLights "));
+  //   sprintf(apSSID + 12, "%*s", 6, escapedMac.c_str() + 6);
+  // }
   if (resetAP) {
     WLED_SET_AP_SSID();
     strcpy_P(apPass, PSTR(WLED_AP_PASS));

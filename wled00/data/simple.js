@@ -513,12 +513,8 @@ function populateInfo(i)
 				urows += inforow(k,val);
 		}
 	}
-	var vcn = "Kuuhaku";
-	if (i.ver.startsWith("0.14.")) vcn = "Hoshi";
-	if (i.ver.includes("-bl")) vcn = "Supāku";
-	if (i.cn) vcn = i.cn;
 
-	cn += `v${i.ver} "${vcn}"<br><br><table>
+	cn += `v${i.ver}-gravvio<br><br><table>
 ${urows}
 ${inforow("Build",i.vid)}
 ${inforow("Signal strength",i.wifi.signal +"% ("+ i.wifi.rssi, " dBm)")}

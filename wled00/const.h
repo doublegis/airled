@@ -9,7 +9,7 @@
 
 //Defaults
 #define DEFAULT_CLIENT_SSID "Your_Network"
-#define DEFAULT_AP_SSID     "WLED-AP"
+#define DEFAULT_AP_SSID     "HelloLights"
 #define DEFAULT_AP_PASS     ""
 #define DEFAULT_OTA_PASS    "wledota"
 #define DEFAULT_MDNS_NAME   "x"

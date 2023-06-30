@@ -8,7 +8,7 @@
  */
 
 // version code in format yymmddb (b = daily build)
-#define VERSION 2806237
+#define VERSION 3006233
 
 //uncomment this if you have a "my_config.h" file you'd like to use
 //#define WLED_USE_MY_CONFIG
@@ -258,7 +258,7 @@ using PSRAMDynamicJsonDocument = BasicJsonDocument<PSRAM_Allocator>;
 
 // Global Variable definitions
 WLED_GLOBAL char versionString[] _INIT(TOSTRING(WLED_VERSION));
-#define WLED_CODENAME "Hoshi"
+#define WLED_CODENAME "gravvio"
 
 // AP and OTA default passwords (for maximum security change them!)
 WLED_GLOBAL char apPass[65]  _INIT(WLED_AP_PASS);
@@ -804,17 +804,18 @@ WLED_GLOBAL volatile uint8_t jsonBufferLock _INIT(0);
 #endif
 #define WLED_WIFI_CONFIGURED (strlen(clientSSID) >= 1 && strcmp(clientSSID, DEFAULT_CLIENT_SSID) != 0)
 
-#ifndef WLED_AP_SSID_UNIQUE
+#ifdef WLED_AP_SSID_CONSTANT
   #define WLED_SET_AP_SSID() do { \
     strcpy_P(apSSID, PSTR(WLED_AP_SSID)); \
   } while(0)
 #else
   #define WLED_SET_AP_SSID() do { \
     strcpy_P(apSSID, PSTR(WLED_AP_SSID)); \
+    escapedMac.toUpperCase(); \
     snprintf_P(\
       apSSID+strlen(WLED_AP_SSID), \
       sizeof(apSSID)-strlen(WLED_AP_SSID), \
-      PSTR("-%*s"), \
+      PSTR(" %*s"), \
       6, \
       escapedMac.c_str() + 6\
     ); \
