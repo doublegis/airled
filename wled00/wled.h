@@ -8,7 +8,7 @@
  */
 
 // version code in format yymmddb (b = daily build)
-#define VERSION 3006233
+#define VERSION 3006235
 
 //uncomment this if you have a "my_config.h" file you'd like to use
 //#define WLED_USE_MY_CONFIG
@@ -348,7 +348,7 @@ WLED_GLOBAL byte nightlightTargetBri _INIT(0);      // brightness after nightlig
 WLED_GLOBAL byte nightlightDelayMins _INIT(60);
 WLED_GLOBAL byte nightlightMode      _INIT(NL_MODE_FADE); // See const.h for available modes. Was nightlightFade
 WLED_GLOBAL bool fadeTransition      _INIT(true);   // enable crossfading color transition
-WLED_GLOBAL uint16_t transitionDelay _INIT(750);    // default crossfade duration in ms
+WLED_GLOBAL uint16_t transitionDelay _INIT(500);    // default crossfade duration in ms
 
 WLED_GLOBAL byte briMultiplier _INIT(100);          // % of brightness to set (to limit power, if you set it to 50 and set bri to 255, actual brightness will be 127)
 
@@ -364,8 +364,8 @@ WLED_GLOBAL byte cacheInvalidate       _INIT(0);       // used to invalidate bro
 
 // Sync CONFIG
 WLED_GLOBAL NodesMap Nodes;
-WLED_GLOBAL bool nodeListEnabled _INIT(true);
-WLED_GLOBAL bool nodeBroadcastEnabled _INIT(true);
+WLED_GLOBAL bool nodeListEnabled _INIT(false);
+WLED_GLOBAL bool nodeBroadcastEnabled _INIT(false);
 
 WLED_GLOBAL byte buttonType[WLED_MAX_BUTTONS]  _INIT({BTN_TYPE_PUSH});
 #if defined(IRTYPE) && defined(IRPIN)
