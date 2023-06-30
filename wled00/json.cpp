@@ -246,6 +246,18 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
   bool onBefore = bri;
   getVal(root["bri"], &bri);
 
+  if (root["effectId"].is<const char*>()) { 
+    strlcpy(effectId, root["effectId"], 25);
+  }
+
+  if (root["groupId"].is<const char*>()) { 
+    strlcpy(groupId, root["groupId"], 25);
+  }
+
+  if (root["static"].is<bool>()) { 
+    effectStatic = root["static"];
+  }
+
   bool on = root["on"] | (bri > 0);
   if (!on != !bri) toggleOnOff();
 

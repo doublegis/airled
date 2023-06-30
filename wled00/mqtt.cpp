@@ -33,6 +33,9 @@ void onMqttConnect(bool sessionPresent)
     strlcpy(subuf, mqttDeviceTopic, 33);
     strcat_P(subuf, PSTR("/api"));
     mqtt->subscribe(subuf, 0);
+    strlcpy(subuf, mqttDeviceTopic, 33);
+    strcat_P(subuf, PSTR("/req"));
+    mqtt->subscribe(subuf, 0);
   }
 
   if (mqttGroupTopic[0] != 0) {
@@ -42,6 +45,9 @@ void onMqttConnect(bool sessionPresent)
     mqtt->subscribe(subuf, 0);
     strlcpy(subuf, mqttGroupTopic, 33);
     strcat_P(subuf, PSTR("/api"));
+    mqtt->subscribe(subuf, 0);
+    strlcpy(subuf, mqttGroupTopic, 33);
+    strcat_P(subuf, PSTR("/req"));
     mqtt->subscribe(subuf, 0);
   }
 
@@ -89,6 +95,10 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   if (strcmp_P(topic, PSTR("/col")) == 0) {
     colorFromDecOrHexString(col, (char*)payloadStr);
     colorUpdated(CALL_MODE_DIRECT_CHANGE);
+  } else if (strcmp_P(topic, PSTR("/req")) == 0) {
+    if(strcmp_P(payload, PSTR("info")) == 0) {
+      publishInfoMqtt();
+    }
   } else if (strcmp_P(topic, PSTR("/api")) == 0) {
     if (payload[0] == '{') { //JSON API
       #ifdef WLED_USE_DYNAMIC_JSON
@@ -115,6 +125,26 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
 }
 
 
+void publishInfoMqtt()
+{
+  if (!WLED_MQTT_CONNECTED) return;
+  DEBUG_PRINTLN(F("Publish info MQTT"));
+
+  DynamicJsonDocument root(1024);
+  JsonObject info = root.createNestedObject("info");
+  serializeInfo(info);
+
+  char json_string[1024];
+  serializeJson(root, json_string);
+
+  char subuf[38];
+
+  strlcpy(subuf, mqttDeviceTopic, 33);
+  strcat_P(subuf, PSTR("/res"));
+  mqtt->publish(subuf, 0, false, json_string);
+}
+
+
 void publishMqtt()
 {
   doPublishMqtt = false;
@@ -124,25 +154,51 @@ void publishMqtt()
   char s[10];
   char subuf[38];
 
+  DynamicJsonDocument root(100);
+  char json_string[100];
+
+  // GroupId
+  if (strlen(groupId) > 0) {
+    root["id"] = groupId;
+    serializeJson(root, json_string);
+    strlcpy(subuf, mqttDeviceTopic, 33);
+    strcat_P(subuf, PSTR("/group"));
+    mqtt->publish(subuf, 0, true, json_string);      // retain groupId message
+  }
+
+  // EffectId
+  if (strlen(effectId) > 0) {
+    root["id"] = effectId;
+    root["static"] = effectStatic;
+    serializeJson(root, json_string);
+    strlcpy(subuf, mqttDeviceTopic, 33);
+    strcat_P(subuf, PSTR("/effect"));
+    mqtt->publish(subuf, 0, true, json_string);      // retain effectId message
+  }
+
+  // Brightness
   sprintf_P(s, PSTR("%u"), bri);
   strlcpy(subuf, mqttDeviceTopic, 33);
   strcat_P(subuf, PSTR("/g"));
   mqtt->publish(subuf, 0, true, s);         // retain message
 
-  sprintf_P(s, PSTR("#%06X"), (col[3] << 24) | (col[0] << 16) | (col[1] << 8) | (col[2]));
-  strlcpy(subuf, mqttDeviceTopic, 33);
-  strcat_P(subuf, PSTR("/c"));
-  mqtt->publish(subuf, 0, true, s);         // retain message
+  // TEMPORARY DISABLE COLOR STATUS MESSAGE
+  // sprintf_P(s, PSTR("#%06X"), (col[3] << 24) | (col[0] << 16) | (col[1] << 8) | (col[2]));
+  // strlcpy(subuf, mqttDeviceTopic, 33);
+  // strcat_P(subuf, PSTR("/c"));
+  // mqtt->publish(subuf, 0, true, s);         // retain message
 
+  // Online/offline status
   strlcpy(subuf, mqttDeviceTopic, 33);
   strcat_P(subuf, PSTR("/status"));
   mqtt->publish(subuf, 0, true, "online");  // retain message for a LWT
 
-  char apires[1024];                        // allocating 1024 bytes from stack can be risky
-  XML_response(nullptr, apires);
-  strlcpy(subuf, mqttDeviceTopic, 33);
-  strcat_P(subuf, PSTR("/v"));
-  mqtt->publish(subuf, 0, false, apires);   // do not retain message
+  // TEMPORARY DISALBE XML STATUS MESSAGE
+  // char apires[1024];                        // allocating 1024 bytes from stack can be risky
+  // XML_response(nullptr, apires);
+  // strlcpy(subuf, mqttDeviceTopic, 33);
+  // strcat_P(subuf, PSTR("/v"));
+  // mqtt->publish(subuf, 0, false, apires);   // do not retain message
 }
 
 
@@ -168,7 +224,16 @@ bool initMqtt()
     mqtt->setServer(mqttServer, mqttPort);
   }
   mqtt->setClientId(mqttClientID);
-  if (mqttUser[0] && mqttPass[0]) mqtt->setCredentials(mqttUser, mqttPass);
+  if (mqttUser[0] && mqttPass[0]) {
+    mqtt->setCredentials(mqttUser, mqttPass);
+  } else {
+    escapedMac = WiFi.macAddress();
+    escapedMac.replace(":", "");
+    escapedMac.toLowerCase();
+    sprintf(mqttUser, "%*s", 6, escapedMac.c_str() + 6);
+    sprintf(mqttPass, "%*s", 6, escapedMac.c_str() + 6);
+    mqtt->setCredentials(mqttUser, mqttPass);
+  }
 
   strlcpy(mqttStatusTopic, mqttDeviceTopic, 33);
   strcat_P(mqttStatusTopic, PSTR("/status"));

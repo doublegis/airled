@@ -161,6 +161,7 @@ void parseLxJson(int lxValue, byte segId, bool secondary);
 //mqtt.cpp
 bool initMqtt();
 void publishMqtt();
+void publishInfoMqtt();
 
 //ntp.cpp
 void handleTime();
