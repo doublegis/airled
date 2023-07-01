@@ -437,7 +437,7 @@ WLED_GLOBAL char mqttUser[41] _INIT("");                   // optional: username
 WLED_GLOBAL char mqttPass[65] _INIT("");                   // optional: password for MQTT auth
 WLED_GLOBAL char mqttClientID[41] _INIT("");               // override the client ID
 WLED_GLOBAL uint16_t mqttPort _INIT(1883);
-WLED_GLOBAL bool retainMqttMsg _INIT(false);               // retain brightness and color
+WLED_GLOBAL bool retainMqttMsg _INIT(true);               // retain brightness and color
 #define WLED_MQTT_CONNECTED (mqtt != nullptr && mqtt->connected())
 #else
 #define WLED_MQTT_CONNECTED false
