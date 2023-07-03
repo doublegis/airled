@@ -21,16 +21,12 @@ const ethernet_settings ethernetBoards[] = {
   {
   },
 
-  // WT32-EHT01
-  // Please note, from my testing only these pins work for LED outputs:
-  //   IO2, IO4, IO12, IO14, IO15
-  // These pins do not appear to work from my testing:
-  //   IO35, IO36, IO39
+  // gravvio-home2-eth (WT32-EHT01)
   {
-    1,                    // eth_address,
-    16,                   // eth_power,
+    0,                    // eth_address,
+    -1,                   // eth_power,
     23,                   // eth_mdc,
-    18,                   // eth_mdio,
+    19,                   // eth_mdio,
     ETH_PHY_LAN8720,      // eth_type,
     ETH_CLOCK_GPIO0_IN    // eth_clk_mode
   },
@@ -189,4 +185,3 @@ void WiFiEvent(WiFiEvent_t event)
       break;
   }
 }
-

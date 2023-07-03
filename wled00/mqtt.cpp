@@ -4,6 +4,7 @@
  * MQTT communication protocol for home automation
  */
 
+#ifdef WLED_ENABLE_MQTT
 #define MQTT_KEEP_ALIVE_TIME 60    // contact the MQTT broker every 60 seconds
 
 void parseMQTTBriPayload(char* payload)
@@ -250,3 +251,8 @@ bool initMqtt()
   mqtt->connect();
   return true;
 }
+
+#else
+  bool initMqtt(){return false;}
+  void publishMqtt(){}
+#endif
